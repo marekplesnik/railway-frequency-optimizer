@@ -1,6 +1,6 @@
 # Samples
 
-## Random Network (Mixed Integer Programing)
+## Random Network (Mixed Integer Programming)
 
 ```
 python main.py --network random --solver mip --stations 30 --classification_yards 5 --capacity 500
