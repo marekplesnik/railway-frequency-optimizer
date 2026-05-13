@@ -149,25 +149,27 @@ class Network:
                         self.graph,
                         self.classification_yards[i],
                         self.classification_yards[j],
-                        weight = "weight"
-                    )  
-                    
+                        weight="weight"
+                    )
+
                     self.lines.append(path)
                     for k in range(len(path) - 1):
                         self.serviced_edges.add(tuple(sorted((path[k], path[k + 1]))))
-                
+
                 except nx.NetworkXNoPath:
                     pass
-        
+
         self.serviced_graph = nx.Graph()
+        self.serviced_graph.add_nodes_from(self.graph.nodes)
+
         for u, v in self.serviced_edges:
             weight = self.graph[u][v].get("weight", 1)
-            self.serviced_graph.add_edge(u, v, weight = weight)
+            self.serviced_graph.add_edge(u, v, weight=weight)
 
 
     def _route_demands(self):
         self.shortest_paths = {}
-        self.traffic_loads = {edge : 0 for edge in self.serviced_edges}
+        self.traffic_loads = {edge: 0 for edge in self.serviced_edges}
 
         for (u, v), demand in self.traffic_demands.items():
             try:
@@ -175,16 +177,24 @@ class Network:
                     self.serviced_graph,
                     u,
                     v,
-                    weight = "weight"
+                    weight="weight"
                 )
 
                 self.shortest_paths[(u, v)] = path
+
                 for k in range(len(path) - 1):
                     edge = tuple(sorted((path[k], path[k + 1])))
                     self.traffic_loads[edge] += demand
 
             except nx.NetworkXNoPath:
                 pass
-        
-        self.line_frequencies = {edge : int(np.ceil(load / self.capacity)) for edge, load in self.traffic_loads.items()}
-        self.line_edges = [[tuple(sorted((path[k], path[k + 1]))) for k in range(len(path) - 1)] for path in self.lines]
+
+        self.line_frequencies = {
+            edge: int(np.ceil(load / self.capacity))
+            for edge, load in self.traffic_loads.items()
+        }
+
+        self.line_edges = [
+            [tuple(sorted((path[k], path[k + 1]))) for k in range(len(path) - 1)]
+            for path in self.lines
+        ]
