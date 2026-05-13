@@ -68,7 +68,7 @@ def main(args):
         print(f"Line {i:2d} [Frequency: {frequency:2d}]: {network.lines[i]}")
 
     if args.visualize:
-        plot_network(network, frequencies = frequencies, objective = direct_travelers)
+        plot_network(network, frequencies = frequencies, objective = direct_travelers, solver_name = args.solver)
 
 
 if __name__ == "__main__":
