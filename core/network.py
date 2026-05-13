@@ -34,46 +34,50 @@ class Network:
         network.stations = stations
         network.capacity = capacity
         network.demand_probability = demand_probability
-        network.points = {i : (int(np.random.randint(0, 101)), int(np.random.randint(0, 101))) for i in range(network.stations)}
+        
+        temp_points = {i : (int(np.random.randint(0, 101)), int(np.random.randint(0, 101))) for i in range(network.stations)}
 
-        station_coordinates = np.array([network.points[i] for i in range(network.stations)])
+        station_coordinates = np.array([temp_points[i] for i in range(network.stations)])
         delaunay_mesh = Delaunay(station_coordinates)
 
         base_graph = nx.Graph()
         for triangle in delaunay_mesh.simplices:
             for i in range(3):
                 station_a, station_b = int(triangle[i]), int(triangle[(i + 1) % 3])
-                base_graph.add_edge(
-                    station_a, 
-                    station_b,
-                    weight = float(
-                        np.hypot(
-                            network.points[station_a][0] - network.points[station_b][0],
-                            network.points[station_a][1] - network.points[station_b][1]
-                        )
-                    )
-                )
+                dist = float(np.hypot(temp_points[station_a][0] - temp_points[station_b][0],
+                                     temp_points[station_a][1] - temp_points[station_b][1]))
+                base_graph.add_edge(station_a, station_b, weight = dist)
 
         network.graph = nx.minimum_spanning_tree(base_graph)
-        remaining_edges = [edge for edge in base_graph.edges(data=True) if not network.graph.has_edge(edge[0], edge[1])]
+        
+        remaining_edges = [edge for edge in base_graph.edges(data = True) if not network.graph.has_edge(edge[0], edge[1])]
         np.random.shuffle(remaining_edges)
         network.graph.add_edges_from(remaining_edges[:int(network.stations * 0.2)])
 
         node_degrees = dict(network.graph.degree())
         leaf_nodes = [node for node, degree in node_degrees.items() if degree == 1]
-        
         sample_size = min(len(leaf_nodes), classification_yards)
-        network.classification_yards = np.random.choice(leaf_nodes, size=sample_size, replace=False).tolist() if sample_size > 0 else []
-
-        if len(network.classification_yards) < classification_yards:
-            other_nodes = [node for node in network.graph.nodes() if node not in network.classification_yards]
-            remaining_classification_yards = classification_yards - len(network.classification_yards)
-            if remaining_classification_yards > 0 and len(other_nodes) > 0:
-                network.classification_yards += np.random.choice(other_nodes, size=remaining_classification_yards, replace=False).tolist()
+        network.classification_yards = np.random.choice(leaf_nodes, size = sample_size, replace = False).tolist() if sample_size > 0 else []
 
         network._build_lines()
 
-        serviced_nodes = list(network.serviced_graph.nodes())
+        serviced_nodes_set = set(network.serviced_graph.nodes())
+        node_mapping = {old_id : new_id for new_id, old_id in enumerate(sorted(serviced_nodes_set))}
+        
+        network.points = {node_mapping[node] : temp_points[node] for node in serviced_nodes_set}
+        network.classification_yards = [node_mapping[y] for y in network.classification_yards]
+        
+        new_graph = nx.Graph()
+        for u, v, data in network.graph.edges(data = True):
+            if u in node_mapping and v in node_mapping:
+                new_graph.add_edge(node_mapping[u], node_mapping[v], **data)
+        
+        network.graph = new_graph
+        network.stations = len(network.points)
+
+        network._build_lines()
+
+        serviced_nodes = list(network.points.keys())
         for i in range(len(serviced_nodes)):
             for j in range(i + 1, len(serviced_nodes)):
                 if np.random.random() < network.demand_probability:
