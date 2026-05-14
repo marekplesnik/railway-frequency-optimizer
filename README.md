@@ -18,7 +18,7 @@
 ## Arguments
 
 > --network (str, default -> random)  
-> Path to a network file or `random` for synthetic generation
+> Path to a network file or `random` to generate one
 
 > --solver (str, default -> mip)  
 > `mip` (Gurobi) or `sa` (Simulated Annealing)
