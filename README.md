@@ -70,6 +70,12 @@
 > station_a station_b amount  
 > ...
 
+## References
+
+> Bussieck, M. R., Kreuzer, P., & Zimmermann, U. T. (1996).  
+> *Optimal lines for railway systems*.  
+> European Journal of Operational Research, 96(1), 54--63.
+
 ## Notes
 
 > - Optimized for Python 3.11.9  
